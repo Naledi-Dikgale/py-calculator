@@ -33,18 +33,27 @@ def button_click():
       text_box.setText(str(result))
 
     except Exception as e:
-      text_box.setText("Error", e)
+      print("Error", e)
 
   elif text == "C":
     text_box.clear()
 
+  elif text == "DEL":
+      text = text_box.text()[:-1]
+      text_box.setText(text)
+
+  else:
+    current_value = text_box.text()
+    text_box.setText(current_value + text)
+
+# loop for creating buttons
 
 row = 0
 col = 0
 
 for text in buttons:
   button = QPushButton(text)
-  # button.clicked.connect(none)
+  button.clicked.connect(button_click)
   grid.addWidget(button, row, col)
   col += 1
 
@@ -68,6 +77,10 @@ master_layout.addLayout(button_row)
 # Set the master layout to the main window
 main_window.setLayout(master_layout)
 #Events
+
+clear_button.clicked.connect(button_click)
+delete_button.clicked.connect(button_click)
+
 
 #Run App
 main_window.show()
