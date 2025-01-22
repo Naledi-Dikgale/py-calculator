@@ -1,97 +1,105 @@
-# module imports
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLineEdit, QBoxLayout, QPushButton, QVBoxLayout, QHBoxLayout, QGridLayout
-from PyQt5.QtGui import QFont
+import tkinter as tk
+from tkinter import font as tkfont
+import numpy as np
 
-class CalculatorApp(QWidget):
+class CalculatorApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        # Main App object and settings
+        self.title("Scientific Calculator")
+        self.geometry("400x600")
+        self.configure(bg="#ffe4e1")  # Light pink background
+        self.resizable(True, True)
 
-        self.setWindowTitle("Calculator App")
-        self.resize(400, 600)
+        self.is_degree = True  # Track current mode (degrees or radians)
 
-        # Create all App widgets
-        self.text_box = QLineEdit()
-        self.text_box.setFont(QFont("Calibri", 24))
+        self.create_widgets()
 
+    def create_widgets(self):
+        # Display Entry (spans entire width)
+        self.display = tk.Entry(self, font=tkfont.Font(size=24), borderwidth=2, relief="solid", justify="right")
+        self.display.grid(row=0, column=0, columnspan=5, sticky="nsew", padx=10, pady=10)
 
-        self.grid = QGridLayout()
-
-        self.buttons = [
-            "7", "8", "9", "/",
-            "4", "5", "6", "*",
-            "1", "2", "3", "-",
-            "0", ".", "=", "+"
+        # Scientific Buttons
+        sci_buttons = [
+            "sin", "cos", "tan", "log", "√",
+            "(", ")", "π", "e", "ˆ"
         ]
-
-        self.clear_button = QPushButton("C")
-        self.delete_button = QPushButton("DEL")
-
-        self.create_buttons()
-        self.create_layout()
-        self.clear_button.setStyleSheet("QPushButton { font-size: 24px comic-sans; padding: 10px }")
-        self.delete_button.setStyleSheet("QPushButton { font-size: 24px comic-sans; padding: 10px }")
-
-    def button_click(self):
-        button = self.sender()
-        text = button.text()
-
-        if text == "=":
-            symbol = self.text_box.text()
-            try:
-                result = eval(symbol)
-                self.text_box.setText(str(result))
-
-            except Exception as e:
-                print("Error", e)
-
-        elif text == "C":
-            self.text_box.clear()
-
-        elif text == "DEL":
-            text = self.text_box.text()[:-1]
-            self.text_box.setText(text)
-
-        else:
-            current_value = self.text_box.text()
-            self.text_box.setText(current_value + text)
-
-    def create_buttons(self):
-        row = 0
+        row = 1
         col = 0
-
-        for text in self.buttons:
-            button = QPushButton(text)
-            button.clicked.connect(self.button_click)
-            button.setStyleSheet("QPushButton { font-size: 24px comic-sans; padding: 10px }")
-            self.grid.addWidget(button, row, col)
+        for button in sci_buttons:
+            action = lambda x=button: self.on_button_click(x)
+            b = tk.Button(self, text=button, font=tkfont.Font(size=16), bg="#bbdefb", fg="black", relief="raised", command=action)
+            b.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
             col += 1
-
-            if col > 3:
+            if col > 4:
                 col = 0
                 row += 1
 
-    def create_layout(self):
-        master_layout = QVBoxLayout()
-        master_layout.addWidget(self.text_box)
-        master_layout.addLayout(self.grid)
+        # Main Calculator Buttons
+        buttons = [
+            "7", "8", "9", "÷", "C",
+            "4", "5", "6", "×", "DEL",
+            "1", "2", "3", "−", "",
+            "0", ".", "=", "+"
+        ]
 
-        button_row = QVBoxLayout()
-        button_row.addWidget(self.clear_button)
-        button_row.addWidget(self.delete_button)
-        master_layout.addLayout(button_row)
-        master_layout.setContentsMargins(20, 20, 20, 20)
+        row += 1
+        col = 0
+        for button in buttons:
+            action = lambda x=button: self.on_button_click(x)
+            bg_color = "#f8bbd0"  # Default button color
+            if button in ("C", "DEL"):
+                bg_color = "#a5d6a7"  # Light green
+            b = tk.Button(self, text=button, font=tkfont.Font(size=18), bg=bg_color, fg="black", relief="raised", command=action)
+            b.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
+            col += 1
+            if col > 4:
+                col = 0
+                row += 1
 
-        self.setLayout(master_layout)
+        # Rad/Deg Button at the Bottom
+        action = lambda: self.on_button_click("Deg/Rad")
+        rad_deg_button = tk.Button(self, text="Deg/Rad", font=tkfont.Font(size=18), bg="#ffcc80", fg="black", relief="raised", command=action)
+        rad_deg_button.grid(row=row + 1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
 
-        self.clear_button.clicked.connect(self.button_click)
-        self.delete_button.clicked.connect(self.button_click)
+        # Grid Configurations
+        for i in range(5):
+            self.grid_columnconfigure(i, weight=1, uniform="col")
+        for i in range(row + 2):
+            self.grid_rowconfigure(i, weight=1, uniform="row")
 
+    def on_button_click(self, char):
+        if char == "=":
+            try:
+                expression = self.display.get()
+                expression = expression.replace("÷", "/").replace("×", "*").replace("ˆ", "**").replace("√", "sqrt")
+                result = eval(expression, {"__builtins__": None}, {
+                    "sin": lambda x: np.sin(np.deg2rad(x)) if self.is_degree else np.sin(x),
+                    "cos": lambda x: np.cos(np.deg2rad(x)) if self.is_degree else np.cos(x),
+                    "tan": lambda x: np.tan(np.deg2rad(x)) if self.is_degree else np.tan(x),
+                    "log": np.log,
+                    "sqrt": np.sqrt,
+                    "pi": np.pi,
+                    "e": np.e
+                })
+                self.display.delete(0, tk.END)
+                self.display.insert(tk.END, str(result))
+            except Exception as e:
+                self.display.delete(0, tk.END)
+                self.display.insert(tk.END, "Error")
+        elif char == "C":
+            self.display.delete(0, tk.END)
+        elif char == "DEL":
+            current_text = self.display.get()
+            self.display.delete(0, tk.END)
+            self.display.insert(tk.END, current_text[:-1])
+        elif char == "Deg/Rad":
+            self.is_degree = not self.is_degree
+            mode = "Degrees" if self.is_degree else "Radians"
+            print(f"Mode switched to {mode}")
+        else:
+            self.display.insert(tk.END, char)
 
-# Run App
-app = QApplication([])
-main_window = CalculatorApp()
-main_window.setStyleSheet(" Object {background-color: #f0f0f0}")
-main_window.show()
-app.exec_()
+if __name__ == "__main__":
+    app = CalculatorApp()
+    app.mainloop()
