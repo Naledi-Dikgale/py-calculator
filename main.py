@@ -15,42 +15,64 @@ class CalculatorApp(tk.Tk):
         self.create_widgets()
 
     def create_widgets(self):
-        # Display Entry
+        # Display Entry (spans entire width)
         self.display = tk.Entry(self, font=tkfont.Font(size=24), borderwidth=2, relief="solid", justify="right")
         self.display.grid(row=0, column=0, columnspan=5, sticky="nsew", padx=10, pady=10)
 
-        # Buttons
-        buttons = [
-            "7", "8", "9", "÷", "C",
-            "4", "5", "6", "×", "DEL",
-            "1", "2", "3", "−", "(",
-            "0", ".", "=", "+", ")",
+        # Scientific Buttons
+        sci_buttons = [
             "sin", "cos", "tan", "log", "√",
-            "Deg/Rad", "ˆ", "π", "e"
+            "(", ")", "π", "e", "ˆ"
         ]
-
         row = 1
         col = 0
-        for button in buttons:
+        for button in sci_buttons:
             action = lambda x=button: self.on_button_click(x)
-            b = tk.Button(self, text=button, font=tkfont.Font(size=18), bg="#f8bbd0", fg="black", relief="raised", command=action)
+            b = tk.Button(self, text=button, font=tkfont.Font(size=16), bg="#bbdefb", fg="black", relief="raised", command=action)
             b.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
             col += 1
             if col > 4:
                 col = 0
                 row += 1
 
+        # Main Calculator Buttons
+        buttons = [
+            "7", "8", "9", "÷", "C",
+            "4", "5", "6", "×", "DEL",
+            "1", "2", "3", "−", "",
+            "0", ".", "=", "+"
+        ]
+
+        row += 1
+        col = 0
+        for button in buttons:
+            action = lambda x=button: self.on_button_click(x)
+            bg_color = "#f8bbd0"  # Default button color
+            if button in ("C", "DEL"):
+                bg_color = "#a5d6a7"  # Light green
+            b = tk.Button(self, text=button, font=tkfont.Font(size=18), bg=bg_color, fg="black", relief="raised", command=action)
+            b.grid(row=row, column=col, sticky="nsew", padx=5, pady=5)
+            col += 1
+            if col > 4:
+                col = 0
+                row += 1
+
+        # Rad/Deg Button at the Bottom
+        action = lambda: self.on_button_click("Deg/Rad")
+        rad_deg_button = tk.Button(self, text="Deg/Rad", font=tkfont.Font(size=18), bg="#ffcc80", fg="black", relief="raised", command=action)
+        rad_deg_button.grid(row=row + 1, column=0, columnspan=2, sticky="nsew", padx=5, pady=5)
+
         # Grid Configurations
         for i in range(5):
             self.grid_columnconfigure(i, weight=1, uniform="col")
-        for i in range(row + 1):
+        for i in range(row + 2):
             self.grid_rowconfigure(i, weight=1, uniform="row")
 
     def on_button_click(self, char):
         if char == "=":
             try:
                 expression = self.display.get()
-                expression = expression.replace("÷", "/").replace("×", "*").replace(ˆ, "**").replace("√", "sqrt")
+                expression = expression.replace("÷", "/").replace("×", "*").replace("ˆ", "**").replace("√", "sqrt")
                 result = eval(expression, {"__builtins__": None}, {
                     "sin": lambda x: np.sin(np.deg2rad(x)) if self.is_degree else np.sin(x),
                     "cos": lambda x: np.cos(np.deg2rad(x)) if self.is_degree else np.cos(x),
